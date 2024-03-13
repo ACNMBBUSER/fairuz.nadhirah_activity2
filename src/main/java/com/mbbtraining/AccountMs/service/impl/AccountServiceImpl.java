@@ -3,13 +3,13 @@ package com.mbbtraining.AccountMs.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mbbtraining.AccountMs.dto.AccountDto;
 import com.mbbtraining.AccountMs.entity.Account;
-import com.mbbtraining.AccountMs.exception.AccountNotFoundException;
 import com.mbbtraining.AccountMs.repository.AccountRepository;
+import com.mbbtraining.AccountMs.response.ExternalResponse;
+import com.mbbtraining.AccountMs.response.ResponseHandler;
 import com.mbbtraining.AccountMs.service.AccountService;
 import com.mbbtraining.AccountMs.service.NotificationService;
-import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
@@ -17,20 +17,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
 
+    ResponseHandler<AccountDto>  responseHandler= new ResponseHandler<>();
+
     private final ModelMapper modelMapper;
 
     private final NotificationService notificationService;
-
-    String createUrl = "https://yesno.wtf/api";
 
     private final Environment environment;
 
@@ -48,79 +50,103 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public String createAccount(Account account){
-        accountRepository.save(account);
-        return "Success";
+    public ResponseEntity<ResponseHandler<List<AccountDto>>> retrieveAccount(){
+
+        List<AccountDto> data = accountRepository.findAll()
+                .stream()
+                .map(value -> modelMapper.map(value, AccountDto.class)).toList();
+
+        return ResponseEntity.ok(responseHandler.generateSuccessResponse(modelMapper));
     }
 
     @Override
-    public ResponseEntity<String> createAccounts(){
-        ResponseEntity<String> response = restTemplate.exchange(createUrl,
+    public ResponseEntity<ResponseHandler> createAccount(Account account) {
+
+        String externalURL = "https://yesno.wtf/api";
+
+        ResponseEntity<String> response = restTemplate.exchange(externalURL,
                 HttpMethod.GET, null,
                 new ParameterizedTypeReference<String>() {
                 });
-        return ResponseEntity.ok(response.getBody());
 
-    }
+        if(response.getStatusCode().is2xxSuccessful()){
+            try {
+                String responseBody = response.getBody();
+                ExternalResponse externalResponse = objectMapper.readValue(responseBody, ExternalResponse.class);
+                String answer = externalResponse.getAnswer();
+                log.info(answer);
 
-//    @Override
-//    public CreateDto createAccounts(Account account) {
-//        return null;
-//    }
+                if(answer != null){
+                    if(answer.equals("yes"))
+                    {
+                        if(account.getName() == null){
+                            return ResponseEntity.ok(responseHandler.generateFailResponse("Name must be filled"));
+                        } else if (account.getCasaAccount() == 0){
+                            return ResponseEntity.ok(responseHandler.generateFailResponse("Casa account must be filled"));
+                        } else if (account.getAccountType() == null) {
+                            return ResponseEntity.ok(responseHandler.generateFailResponse("Account Tye must be filled"));
+                        }
+                        else {
+                            LocalDate currentDate = LocalDate.now();
+                            account.setCreatedDate(currentDate);
+                            account.setModifiedDate(currentDate);
+                            accountRepository.save(account);
+                            return ResponseEntity.ok(responseHandler.generateSuccessResponse("Account Creation Success"));
+                        }
+                    } else if (answer.equals("no")) {
+                        return ResponseEntity.ok(responseHandler.generateFailResponse("Account creation failed"));
 
-//    @Override
-//    public List<Account> getAllAccount(){
-//        return accountRepository.findAll();
-
-//    }
-
-    @Override
-    public List<AccountDto> getAllAccount(){
-        return accountRepository.findAll()
-                .stream()
-                .map(this::convertEntityToDto)
-                .collect(Collectors.toList());
-    }
-
-    private AccountDto convertEntityToDto(Account account){
-        modelMapper.getConfiguration()
-                .setMatchingStrategy(MatchingStrategies.LOOSE);
-        AccountDto accountDto = new AccountDto();
-        accountDto = modelMapper.map(account, AccountDto.class);
-        return accountDto;
-    }
-
-    @Override
-    public Account getAccount(int id){
-        if(accountRepository.findById(id).isEmpty())
-            throw new AccountNotFoundException("Request Account Details does not exist");
-        return accountRepository.findById(id).get();
-    }
-//    @Override
-//    public String updateAccount(int id){
-//        accountRepository.save(id);
-//        return "Success";
-
-//    }
-
-    public Account updateById(int id, Account updateAccount){
-        Optional<Account> optionalAccount = accountRepository.findById(id);
-
-        if(optionalAccount.isPresent()){
-            Account existingAccount = optionalAccount.get();
-            existingAccount.setName(updateAccount.getName());
-            existingAccount.setAccountType(updateAccount.getAccountType());
-
-            return accountRepository.save(existingAccount);
+                    }
+                } return ResponseEntity.ok(responseHandler.generateFailResponse("Failed to do eligible checking"));
+            } catch (Exception e){
+                e.printStackTrace();
+                return ResponseEntity.ok(responseHandler.generateFailResponse("Failed to parse eligibility answer"));
+            }
         } else {
-            throw new EntityNotFoundException("Account with ID" + id + " not found");
+            return ResponseEntity.ok(responseHandler.generateFailResponse("Failed to fetch eligibility checking"));
         }
     }
 
-    public void updateMultipleAccounts(List<AccountDto> accountDtoList){
-        for (AccountDto accountDto : accountDtoList ){
+    @Override
+    public ResponseEntity<ResponseHandler> updateAccount(int id, AccountDto accountDto) {
+
+        Optional<Account> optionalAccount = accountRepository.findById(id);
+
+        if (optionalAccount.isPresent()) {
+            Account updateAccount = optionalAccount.get();
+
+            if (accountDto.getAccountId() != 0) {
+                updateAccount.setAccountId(accountDto.getAccountId());
+            }
+            if (accountDto.getName() != null) {
+                updateAccount.setName(accountDto.getName());
+            }
+            if (accountDto.getCasaAccount() != 0) {
+                updateAccount.setCasaAccount(accountDto.getCasaAccount());
+            }
+            if (accountDto.getAccountType() != null) {
+                updateAccount.setAccountType(accountDto.getAccountType());
+            }
+            if (accountDto.getStatus() != null) {
+                updateAccount.setStatus(accountDto.getStatus());
+            }
+
+            LocalDate localDate = LocalDate.now();
+            updateAccount.setModifiedDate(localDate);
+            accountRepository.save(updateAccount);
+
+            return ResponseEntity.ok(responseHandler.generateSuccessResponse(updateAccount));
+        } else {
+            return ResponseEntity.ok(responseHandler.generateFailResponse("Account ID not found" + id));
+        }
+    }
+
+    @Override
+    public ResponseEntity<ResponseHandler> updateMultipleAccounts(List<AccountDto> accountDtoList) {
+
+        for (AccountDto accountDto : accountDtoList) {
             Optional<Account> optionalAccount = accountRepository.findById(accountDto.getId());
-            if (optionalAccount.isPresent()){
+            if (optionalAccount.isPresent()) {
                 Account existingAccount = optionalAccount.get();
                 existingAccount.setName(accountDto.getName());
                 existingAccount.setAccountType(accountDto.getAccountType());
@@ -132,11 +158,19 @@ public class AccountServiceImpl implements AccountService {
                 throw new RuntimeException("Account not found with ID: " + accountDto.getId());
             }
         }
+        return ResponseEntity.ok(responseHandler.generateSuccessResponse(accountDtoList));
     }
 
     @Override
-    public String deleteAccount(int id){
-        accountRepository.deleteById(id);
-        return "Success";
+    public ResponseEntity<?> deleteAccount(int id) {
+
+        Optional<Account> optionalAccountDto = accountRepository.findById(id);
+        if (optionalAccountDto.isPresent()){
+            accountRepository.deleteById(id);
+            return ResponseEntity.ok(responseHandler.generateSuccessResponse("Account " + id + "successfully deleted"));
+        } else {
+
+            return ResponseEntity.ok(responseHandler.generateFailResponse("Account " + id + "not found"));
+        }
     }
 }

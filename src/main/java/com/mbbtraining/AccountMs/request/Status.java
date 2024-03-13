@@ -13,11 +13,11 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Status {
 
-    @JsonProperty("Type")
-    public String Type;
-
     @JsonProperty("Code")
-    public int Code;
+    public String Code;
+
+    @JsonProperty("Description")
+    public String Description;
 
     @JsonProperty("Message")
     public String Message;
@@ -28,29 +28,20 @@ public class Status {
     @JsonProperty("Errors")
     public List<String> Errors;
 
-    public Status(String type, int code, long timestamp, String error){
-        this.Type = type;
-        this.Code = code;
-        this.Timestamp = timestamp;
-        this.Errors = new ArrayList<>();
-        this.Errors.add(error);
+    public Status(String code, String description, String message, long timestamp, String error) {
+        Code = code;
+        Description = description;
+        Message = message;
+        Timestamp = timestamp;
+        Errors = new ArrayList<>();
+        Errors.add(error);
     }
 
-//    public Status(String type, int code, long timestamp, List<String> errors){
-//        this.Type = type;
-//        this.Code = code;
-//        this.Timestamp = timestamp;
-//        this.Errors = errors;
-//    }
-
-    public Status(String Type, int Code, String Message, long Timestamp, List<String> Errors){
-        this.Type = Type;
-        this.Code = Code;
-        this.Message = Message;
-        this.Timestamp = Timestamp;
-        this.Errors = Errors;
+    public Status(String code, String description, String message, long timestamp, List<String> Errors) {
+        Code = code;
+        Description = description;
+        Message = message;
+        Timestamp = timestamp;
+        Errors = Errors;
     }
-
-//    public Status() {
-//    }
 }

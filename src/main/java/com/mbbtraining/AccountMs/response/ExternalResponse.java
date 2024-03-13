@@ -1,0 +1,14 @@
+package com.mbbtraining.AccountMs.response;
+
+public class ExternalResponse {
+
+    private String answer;
+
+    public String getAnswer() {
+        return answer;
+    }
+
+    public void setAnswer(String answer) {
+        this.answer = answer;
+    }
+}
