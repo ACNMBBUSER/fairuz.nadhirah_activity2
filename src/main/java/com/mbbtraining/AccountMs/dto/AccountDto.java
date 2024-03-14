@@ -3,9 +3,6 @@ package com.mbbtraining.AccountMs.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SecondaryRow;
-
-import java.awt.*;
 
 @Data
 @AllArgsConstructor

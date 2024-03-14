@@ -26,45 +26,6 @@ public class AccountController {
         this.accountRepository = accountRepository;
     }
 
-//    @GetMapping("/get")
-//    public List<AccountDto> getAllAccountDetails()
-//    {
-//        return accountService.getAllAccount();
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Object> getAccountDetails(@PathVariable("id") int id){
-//        return ResponseHandler.responseBuilder("Account details are given here",
-//                HttpStatus.OK, accountService.getAccount(id));
-//    }
-//
-//// in use
-//    @PostMapping("/create")
-//    public String createAccount(@RequestBody Account account)
-//    {
-//        accountService.createAccount(account);
-//        return "Account created successfully";
-//    }
-//
-//    @PutMapping("/update/{id}")
-//    public ResponseEntity<Account> updateAccountById(@PathVariable int id, @RequestBody Account updateAccount){
-//        Account accountUpdate = accountService.updateById(id, updateAccount);
-//        return new ResponseEntity<>(updateAccount, HttpStatus.OK);
-//    }
-//
-//    @PutMapping("/updateMultiple")
-//    public ResponseEntity<String> updateMultipleAccounts(@RequestBody List<AccountDto> accountDtoList){
-//        accountService.updateMultipleAccounts(accountDtoList);
-//        return ResponseEntity.ok("Accounts update successfully");
-//    }
-//
-//    @DeleteMapping("/delete/{id}")
-//    public String deleteAccount(@PathVariable("id") int id)
-//    {
-//        accountService.deleteAccount(id);
-//        return "Account has been deleted";
-//    }
-
     @GetMapping("/retrieve")
     public ResponseEntity<ResponseHandler<List<AccountDto>>> getAll(){
         return accountService.retrieveAccount();

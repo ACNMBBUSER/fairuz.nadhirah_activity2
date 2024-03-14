@@ -11,14 +11,12 @@ import com.mbbtraining.AccountMs.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,18 +32,15 @@ public class AccountServiceImpl implements AccountService {
 
     private final NotificationService notificationService;
 
-    private final Environment environment;
-
     public RestTemplate restTemplate = new RestTemplate();
 
     private final ObjectMapper objectMapper;
 
 
-    public AccountServiceImpl(AccountRepository accountRepository, ModelMapper modelMapper, NotificationService notificationService, Environment environment, ObjectMapper objectMapper) {
+    public AccountServiceImpl(AccountRepository accountRepository, ModelMapper modelMapper, NotificationService notificationService, ObjectMapper objectMapper) {
         this.accountRepository = accountRepository;
         this.modelMapper = modelMapper;
         this.notificationService = notificationService;
-        this.environment = environment;
         this.objectMapper = objectMapper;
     }
 

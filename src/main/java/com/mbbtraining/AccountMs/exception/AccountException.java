@@ -1,6 +1,5 @@
 package com.mbbtraining.AccountMs.exception;
 
-import com.mbbtraining.AccountMs.entity.Account;
 import org.springframework.http.HttpStatus;
 
 public class AccountException {

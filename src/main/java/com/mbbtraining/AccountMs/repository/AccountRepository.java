@@ -1,6 +1,5 @@
 package com.mbbtraining.AccountMs.repository;
 
-import com.mbbtraining.AccountMs.dto.AccountDto;
 import com.mbbtraining.AccountMs.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
